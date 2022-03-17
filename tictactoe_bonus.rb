@@ -18,9 +18,9 @@ Tic-Tac-Toe is played by two players. Your piece is 'X', the computer's piece is
 The board is divided by 9 squares, numbered 1 through 9 from top left to bottom right, like so:
 
                                   1 | 2 | 3
-                                ---+---+----
+                                 ---+---+----
                                   4 | 5 | 6 
-                                ---+---+----
+                                 ---+---+----
                                   7 | 8 | 9
 
 To win one round, the player will have to place their piece on three squares in a row, including diagonals.
