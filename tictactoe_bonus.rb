@@ -1,4 +1,6 @@
-require 'pry'
+require 'io/console'
+
+# == CONSTANTS == #
 
 ROUNDS_NEEDED = 2
 INITIAL_MARKER = ' '
@@ -8,8 +10,41 @@ WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                 [[1, 4, 7], [2, 5, 8], [3, 6, 9]] + # cols
                 [[1, 5, 9], [3, 5, 7]]              # diagonals
 
+WELCOME = <<-MSG
+Welcome to "Tic-Tac-Toe"!
+
+Tic-Tac-Toe is played by two players. Your piece is 'X', the computer's piece is 'O'.
+
+The board is divided by 9 squares, numbered 1 through 9 from top left to bottom right, like so:
+
+                                  1 | 2 | 3
+                                ---+---+----
+                                  4 | 5 | 6 
+                                ---+---+----
+                                  7 | 8 | 9
+
+To win one round, the player will have to place their piece on three squares in a row, including diagonals.
+
+The final winner will be the first one to reach #{ROUNDS_NEEDED} total rounds!
+
+Good luck and have fun playing Tic-Tac-Toe!!
+
+MSG
+
+ORDER = <<-MSG
+Please decide who should go first: 1) Player. 2) Computer. 3) Random.
+Order will alternate between rounds.
+MSG
+
+def markers(mark1, mark2)
+  "You're a #{mark1}. Computer is #{mark2}."
+end
 
 # ==== DISPLAY METHODS ====== #
+
+def clear
+  system 'clear'
+end
 
 def prompt(msg)
   puts "=> #{msg}"
@@ -17,8 +52,8 @@ end
 
 # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 def display_board(brd)
-  system 'clear'
-  puts "You're a #{PLAYER_MARKER}. Computer is #{COMPUTER_MARKER}."
+  clear
+  puts markers(PLAYER_MARKER, COMPUTER_MARKER)
   puts ""
   puts "     |     |"
   puts "  #{brd[1]}  |  #{brd[2]}  |  #{brd[3]}"
@@ -34,6 +69,13 @@ def display_board(brd)
   puts ""
 end
 # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+def home_screen
+  puts WELCOME
+  puts "Press any key to continue."
+  STDIN.getch
+  clear
+end
 
 def joinor(arr, d1= ', ', d2= 'or')
   join = ''
@@ -55,20 +97,24 @@ def initialize_board
   new_board
 end
 
+def valid_choice?(answer)
+  (1..3).include?(answer)
+end
+
 def first_player
-  prompt "Please decide who should go first: 1) Player. 2) Computer. 3) Random."
-
-  answer = gets.chomp.to_i
-  if answer == 1
-    'Player'
-  elsif answer == 2
-    'Computer'
-  elsif answer == 3
-    ['Player', 'Computer'].sample
-  else
+  clear
+  answer = nil
+  loop do
+    puts ORDER
+    answer = gets.chomp.to_i
+    break if valid_choice?(answer)
     puts "That's not a valid choice. Please try again."
+    sleep(2)
+    clear
   end
-
+  return 'Player' if answer == 1
+  return 'Computer' if answer == 2
+  return ['Player', 'Computer'].sample if answer == 3
 end
 
 def empty_squares(brd)
@@ -115,11 +161,11 @@ def computer_turn!(brd)
     break if square == true
   end
 
-  if square == nil && brd[5] == INITIAL_MARKER
+  if square.nil? && brd[5] == INITIAL_MARKER
     square = 5
   end
 
-  if square == nil
+  if square.nil?
     square = empty_squares(brd).sample
   end
 
@@ -158,31 +204,35 @@ def someone_won?(brd)
 end
 
 def current_score(arr1, arr2)
-  sleep(2)
-  prompt "We're playing to the best of #{ROUNDS_NEEDED}!"
-  puts " "
-  prompt "The current score for the player is #{arr1.size}."
-  puts " "
-  prompt "The current score for the computer is #{arr2.size}."
-  puts " "
-  sleep(2)
+  clear
+  puts <<-MSG
+We're playing to the best of #{ROUNDS_NEEDED}!
+
+The current score for the player is #{arr1.size}.
+
+The current score for the computer is #{arr2.size}.
+
+  MSG
+  sleep(3.5)
 end
 
 def final_winner(arr1, arr2, constant)
   if arr1.size == constant
-    prompt "The Player is the final winner!"
+    puts "The Player is the final winner!"
+    puts ""
   elsif arr2.size == constant
-    prompt "The Computer has defeated you!"
+    puts "The Computer has defeated you!"
+    puts ""
   end
 end
 
 def announce_round(brd)
   if someone_won?(brd)
     prompt "#{detect_winner(brd)} won this round!"
-    sleep(1)
+    sleep(2)
   elsif board_full(brd)
     prompt "It's a tie!"
-    sleep(1)
+    sleep(2)
   end
 end
 
@@ -201,32 +251,40 @@ def game_loop(brd, player)
     display_board(brd)
     place_piece!(brd, player)
     player = alternate_player(player)
-    announce_round(brd)
-
+    display_board(brd)
+    # announce_round(brd)
     break if board_full(brd) || someone_won?(brd)
   end
 end
 
 # methods above this line
 
-loop do
+home_screen
 
+loop do
   player_rounds = []
   computer_rounds = []
+  current_player = first_player
 
   loop do
-
     board = initialize_board
-    current_player = first_player
 
     current_score(player_rounds, computer_rounds)
 
     game_loop(board, current_player)
 
+    announce_round(board)
+
+    current_player = alternate_player(current_player)
+
     add_score(board, player_rounds, computer_rounds)
 
     break if computer_rounds.size == ROUNDS_NEEDED
     break if player_rounds.size == ROUNDS_NEEDED
+    # prompt "Any key to continue..."
+    # STDIN.getch
+    # sleep(1)
+    # system 'clear'
 
   end
 
